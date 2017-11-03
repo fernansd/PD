@@ -284,10 +284,24 @@
 ;; Ejercicio 5
 ;;;;
 
+;;
+;; Nombre: suma-serie-iterativa
+;; Objetivo: calcula la suma de una serie de forma iterativa
+;; Parámetros:
+;;   f: función que calcula el término en una posición n de la serie
+;;   inicial: valor inicial del índice de la serie
+;;   siguiente: función que da el paso para dado un índice de la serie
+;;   cota: valor que define la condición de parada
+;; Resultados:
+;;   Devuelve el valor de la serie tras alcanzar el valor de cota
+;; Descripción:
+;;   Va sumando los términos obtenidos para el índice actual, hasta que el término
+;;   calculado sea menor que la cota recibida como parámetro.
+;;
 (define (suma-serie-iterativa f inicial siguiente cota)
   (do (
        ;; Valor del índice de la serie
-       (n (+ inicial (siguiente n)) (+ n (siguiente n)))
+       (n (+ inicial (siguiente inicial)) (+ n (siguiente n)))
        ;; Valor del término para el índice n de la serie
        (termino (f inicial) (f n))
        ;; Valor de la suma actual de la serie
@@ -298,17 +312,69 @@
     )
   )
 
-;; Apartado c:
-;; Función auxiliar que suma un serie
-(define (sumar-serie-trapecios iteraciones)
-  (do (
-       (n 0 (+ n 1))
-       (resultado 0.0 (+ resultado (termino x n)))
-       )
-    ((> n iteraciones) resultado)
+;;
+;; Nombre: suma-serie-recursiva
+;; Objetivo: calcula la suma de una serie de forma recursiva
+;; Parámetros:
+;;   f: función que calcula el término en una posición n de la serie
+;;   inicial: valor inicial del índice de la serie
+;;   siguiente: función que da el paso para dado un índice de la serie
+;;   cota: valor que define la condición de parada
+;; Resultados:
+;;   Devuelve el valor de la serie tras alcanzar el valor de cota
+;; Descripción:
+;;   Va sumando los términos obtenidos para el índice actual, hasta que el término
+;;   calculado sea menor que la cota recibida como parámetro.
+;;
+(define (suma-serie-recursiva f inicial siguiente cota)
+  ;; Función auxiliar para realizar las llamadas recursivas
+  (define (auxiliar suma f indice siguiente cota)
+    (let* (;; Valor del término de la serie para el índice actual
+          (termino (f indice))
+          ;; Valor de la suma incluyendo el término actual
+          (sum-nueva (+ suma termino))
+          )
+      ;; Comprueba si se ha alcanzado la codición de parada
+      (if (< (abs termino) cota)
+          sum-nueva
+          ;; Si no se para, se calcula el siguiente términio de la suma
+          (auxiliar sum-nueva f (+ indice (siguiente indice)) siguiente cota)
+          )
+      )
     )
+  ;; Comenzamos a realizar la suma desde 0
+  (auxiliar 0 f inicial siguiente cota)
   )
-;;(sumar-serie-trapecios 300)
+
+;;;;
+;; Apartado c: ejemplos
+
+;;
+;; Nombre: termino-leibniz
+;; Objetivo: obtiene el valor del término en posición n para la serie de leibniz para pi/4
+;; Parámetros:
+;;   n: posición del término a calcular
+;; Resultados:
+;;   Devuelve el valor del término en la posición n
+;; Descripción:
+;;   La serie cumple la regla de que los términos posición par son negativos, y los de
+;;   posición impar son positivos. Además cada término se obtiene como el cociente de 1
+;;   entre el n-ésimo número impar.
+;;
+(define (termino-leibniz n)
+  (if (= 0 (remainder n 2))
+      ;; Si es par es negativo
+      (/ -1.0 (- (* 2 n) 1))
+      ;; Si es impar es positivo
+      (/ 1.0 (- (* 2 n) 1))
+      )
+  )
+;; Ejemplos:
+;;(suma-serie-iterativa termino-leibniz 1 (lambda (x) 1) 0.0001)
+;; = 0.7853481633979478
+;;(suma-serie-recursiva termino-leibniz 1 (lambda (x) 1) 0.0001)
+;; = 0.7854481533989477
+;;;;
 
 ;;;;
 ;; Ejercicio 6
@@ -498,7 +564,7 @@
        (numerador (expt n 2.0) (expt i 2.0))
        ;; Parte de denominador, es el número impar en la posición n
        (denominador (+ 1 (* 2 (- n 1))) (- denominador 2))
-       ;; 
+       ;; Valor actual del cálculo
        (resultado (+ 1 (* 2. n)) (+ denominador (/ numerador resultado)))
        )
     ((< i 0) (/ 4 resultado))
@@ -681,3 +747,4 @@
 ;;             ))
 ;;(dif 1)
 ;; = 2
+;;;;
