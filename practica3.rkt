@@ -23,15 +23,17 @@
   (define (divisor? n div)
     (= 0 (remainder n div)))
   (do
-      (
+      (;; Divisor actual que se prueba
        (div 2 (+ 1 div))
+       ;; Si el número es un divisor, lo añade a la suma, 1 siempre forma parte
        (suma 1 (if (divisor? num div)
                    (+ suma div)
                    suma)
             )
-       (ultimo-div (ceiling (/ num 2)))
+       ;; Valor máximo que puede tomar el mayor divisor
+       (max-div (ceiling (/ num 2)))
        )
-    ((> div ultimo-div) suma)
+    ((> div max-div) suma)
     )
   
   )
@@ -56,7 +58,7 @@
 ;; Funciones a las que llama: suma-divisores
 ;;
 (define (amigos? num1 num2)
-  (and 
+  (and ;; Dos números serán amigos cuando las sumas de sus divisores igualen el otro número
    (= num1 (suma-divisores num2))
    (= num2 (suma-divisores num1))
    )
@@ -133,18 +135,20 @@
 ;; Resultados:
 ;;   Devuelve el máximo común divisor de los números
 ;; Descripción:
-;;   Dados dos números a y b se obtiene el resto de su división.
+;;   Dados dos números a y b, se obtiene el resto de su división.
 ;;   Pasando a nombrarse "a" el número "b" y a nombrarse "b" el resto.
 ;;   Este proceso se realiza repetidamente hasta que b sea 0, momento en el
 ;;   cual se sabe que el número que sea "a", será el máximo común divisor
-;;   de los a y b originales. Usa un procedimiento recursivo.
+;;   de los números a y b originales. Usa un procedimiento recursivo.
 ;;
 (define (mcd-recursivo num1 num2)
   ;; Función auxiliar que se encarga de calcular el MCD
   (define (mcd-aux n1 n2)
     ;; Se termina cuando n2 = 0
     (if (= 0 n2)
+        ;; Si el segundo término es 0, el mcd será n1
         n1
+        ;; Se vuelve a llamar la función para los siguientes valores
         (mcd-aux n2 (remainder n1 n2))
         )
     )
@@ -266,13 +270,33 @@
        ;; suma de las áreas
        (sum 0 (+ sum (* h (/ (+ (f xi) (f xi+1)) 2.))))
        )
+    ;; Se devuelve la suma al alcanzar el número de iteraciones
     ((> i n) sum)
     )
   )
 
-;; Apartado b:
+;; Ejemplos:
 ;;(integral 0 2 (lambda (x) (+ 1 (* 3 (expt x 2)))) 300)
 ;; = 10.000044444444443
+;;;;
+
+;;;;
+;; Ejercicio 5
+;;;;
+
+(define (suma-serie-iterativa f inicial siguiente cota)
+  (do (
+       ;; Valor del índice de la serie
+       (n (+ inicial (siguiente n)) (+ n (siguiente n)))
+       ;; Valor del término para el índice n de la serie
+       (termino (f inicial) (f n))
+       ;; Valor de la suma actual de la serie
+       (suma 0 (+ suma termino))
+       )
+    ;; Se termina cuando el valor absoluto del término actual sea menor que la cota
+    ((< (abs termino) cota) suma)
+    )
+  )
 
 ;; Apartado c:
 ;; Función auxiliar que suma un serie
@@ -285,19 +309,6 @@
     )
   )
 ;;(sumar-serie-trapecios 300)
-
-;;;;
-;; Ejercicio 5
-;;;;
-
-(define (suma-serie-iterativa f inicial siguiente cota)
-  (do (
-       (t 3)
-       )
-    ((> t 3) 8)
-    )
-  )
-
 
 ;;;;
 ;; Ejercicio 6
@@ -425,6 +436,12 @@
     ((>= i n) suma) ;; Devuelve la suma al acabar
     )
   )
+;; Ejemplos:
+;;(suma-aureo-iterativo 10)
+;; = 1.6180165422314876
+;;(suma-aureo-iterativo 20)
+;; = 1.618033988611368
+;;;;
 
 ;;
 ;; Nombre: suma-aureo-recursivo
@@ -442,9 +459,16 @@
 (define (suma-aureo-recursivo n)
   (if (= n 1)
       1 ;; El último término vale 1
+      ;; Se realiza la raíz cuadrada de 1 + el resultado del resto de operaciones
       (sqrt (+ 1 (suma-aureo-recursivo (- n 1))))
       )
   )
+;; Ejemplos:
+;;(suma-aureo-recursivo 10)
+;; = 1.6180165422314876
+;;(suma-aureo-recursivo 20)
+;; = 1.618033988611368
+;;;;
 
 ;;;;
 ;; Ejercicio 9
@@ -458,23 +482,31 @@
 ;; Resultados:
 ;;   Valor de pi aproximado mediante la fracción continua
 ;; Descripción:
-;;   Se suman tantos términos de la fracción continua como se piden por parámetro.
+;;   Se calculan tantos términos de la fracción continua como se pide por parámetro.
 ;;   La fracción tiene la forma:
-;;     pi = 4/(1+ 1/(3+ 4/(5+ 9/(7+..))))
+;;     pi = 4/(1 + 1/(3 + 4/(5 + 9/(7 +..))))
+;;   Empieza calculando el valor de la fracción más profunda, y va calculando hacia
+;;   afuera. Por último divide 4 entre el resultado calculado.
+;;   Las fracciones tienen como numerador los cuadrados de los números naturales y
+;;   como denominador los naturales positivos sumando con la fracción siguiente.
 ;;
 (define (calculo-pi-iterativo n)
   (do (
+       ;; Contador de iteraciones, empieza desde el penúltimo término
        (i (- n 1) (- i 1))
+       ;; Parte del númerador en la fracción, es el cuadrado de los naturales
        (numerador (expt n 2.0) (expt i 2.0))
+       ;; Parte de denominador, es el número impar en la posición n
        (denominador (+ 1 (* 2 (- n 1))) (- denominador 2))
-       (resultado (+ 1 (* 2. (- n 1))) (+ denominador (/ numerador resultado)))
+       ;; 
+       (resultado (+ 1 (* 2. n)) (+ denominador (/ numerador resultado)))
        )
     ((< i 0) (/ 4 resultado))
     )
   )
 ;; Ejemplos:
 ;;(calculo-pi-iterativo 10)
-;; = 3.1415926843825424
+;; = 3.1415926730303343
 ;;(calculo-pi-iterativo 50)
 ;; = 3.141592653589793
 ;;;;
@@ -492,10 +524,14 @@
 ;; Resultados:
 ;;   Valor del factor en la posición n de la sucesión de Wallis
 ;; Descripción:
+;;   Según si el término está en una posición par o impar del productorio,
+;;   se calcula de una forma distinta. Las posiciones son sobre índice 1.
+;;    par = n+2/n+1    impar = n+1/n+2
 ;;   La sucesión de Wallis tiene la forma:
 ;;     (2/3)*(4/3)*(4/5)*(6/5)*(6/7)*(8/7)*(8/9)*...
 ;;
 (define (factor-wallis n)
+  ;; Se comprueba si el término está en posición par o impar
   (if (= 0 (remainder n 2))
       ;; si es par
       (/ (+ n 2) (+ n 1))
@@ -514,22 +550,33 @@
 ;; Nombre: wallis-iterativa
 ;; Objetivo: aproxima el valor de pi/4 con el producto de Wallis
 ;; Parámetros:
-;;   n: número de factores a usar para la aproximación
+;;   n: número de factores a usar para la aproximación (debe ser mayor que 1)
 ;; Resultados:
 ;;   Valor de la aproximación de pi/4 según el número de términos usados
 ;; Descripción:
 ;;   La aproximación de pi/4 por el producto de Wallis se obtiene multiplicando
-;;   tantos factores del productorio como pida el usuario
+;;   tantos factores del productorio como pida el usuario.
+;;    productorio-wallis = 2/3 * 4/3 * 4/5 * 6/5 * 6/7 * 8/7 * 8/9 * ...
 ;; Funciones a las que llama: factor-wallis
 ;;
 (define (wallis-iterativa n)
-  (do (
+  (do (;; Contador de iteraciones
        (i 1 (+ i 1))
+       ;; Valor del productorio para la iteración i
        (resultado 1.0 (* resultado (factor-wallis i)))
        )
+    ;; Se para al alcanzar el número de iteraciones pedidas
     ((> i n) resultado)
     )
   )
+;; Ejemplos:
+;;(wallis-iterativa 10)
+;; = 0.8187752...
+;;(wallis-iterativa 10000)
+;; = 0.7854374...
+;;(wallis-iterativa 1000000)
+;; = 0.7853985...
+;;;;
 
 ;;
 ;; Nombre: wallis-recursiva
@@ -540,17 +587,23 @@
 ;;   Valor de la aproximación de pi/4 según la cota de error recibida
 ;; Descripción:
 ;;   La aproximación de pi/4 por el producto de Wallis se obtiene multiplicando
-;;   factores hasta que uno quede dentro del rango definido por la cota
+;;   factores hasta que uno quede dentro del rango definido por la cota.
+;;    productorio-wallis = 2/3 * 4/3 * 4/5 * 6/5 * 6/7 * 8/7 * 8/9 * ...
 ;; Funciones a las que llama: factor-wallis
 ;;
 (define (wallis-recursiva cota)
+  ;; Función auxiliar para la recursividad
   (define (auxiliar cota producto n)
-    (let* (
+    (let* (;; Valor del factor de wallis para la posición n
           (factor (factor-wallis n))
+          ;; Valor del producto de Wallis incluyendo el factor recién calculado
           (prod-nuevo (* producto factor))
           )
+      ;; Comprueba si el factor calculado está dentro del rango de parada
       (if (< (- 1 cota) factor (+ 1 cota))
+          ;; Devuelve el producto calculado al llegar a la condición de parada
           prod-nuevo
+          ;; Si no se para, se llama a la función auxiliar para el siguiente término
           (auxiliar cota prod-nuevo (+ n 1))
           )
       )
@@ -582,8 +635,10 @@
 ;; Descripción:
 ;;   La función devuelta permite que se calcule el incremento funcional para cualquier
 ;;   punto de la función que se recibe como parámetro.
+;;    incremento_funcional = (f(x+1) - 2f(x) + f(x-1))/4
 ;;
 (define (incremento-funcional f)
+  ;; El valor devuelto es esta función
   (lambda (x)
     (/
      (+ (f (+ x 1)) (* -2 (f x)) (f (- x 1)))
@@ -608,4 +663,21 @@
 ;;   f: función a la que se hace la diferencia
 ;;   g: función que resta a la otra
 ;; Resultados:
-;; 
+;;   Devuelve una función que calcula la diferencia simétrica para las 2 funciones
+;;   recibidas, dado un punto sobre el que calcularlas
+;; Descripción:
+;;   La función a devolver se crea usando un lambda, el cual calcula el valor absoluto
+;;   de la diferencia de aplicar cada una de las funciones para el punto pasado por parámetro.
+;;    diferencia_simetrica = |f(x)-g(x)|
+;;   
+(define (diferencia-simetrica f g)
+  ;; El valor devuelto es la función que hace el cálculo en un punto
+  (lambda (x) (abs (- (f x) (g x))))
+  )
+;; Ejemplos:
+;;(define dif (diferencia-simetrica
+;;             (lambda (x) x);; y=x
+;;             (lambda (x) (- x));; y=-x
+;;             ))
+;;(dif 1)
+;; = 2
