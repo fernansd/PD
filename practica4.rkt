@@ -86,7 +86,7 @@
 ;;   Matriz transformada al realizar el producto vectorial de cada vector columna
 ;;   por el vector recibido
 ;; Descripción:
-;;   
+;;
 ;;
 (define (aplicar vec mat)
   (let* (
