@@ -234,3 +234,255 @@
 ;;   Devuelve el número de veces que se ha encontrado el elemento en la lista
 ;; Descripción:
 ;;   Recorre toda la lista y va incrementando un conta
+;;
+(define (veces lista elem)
+  (cond
+    ((not (list? lista)) 0)
+    ((null? lista) 0)
+    ((list? (car lista))
+     (+ (veces (car lista) elem)
+        (veces (cdr lista) elem)
+        )
+     )
+    (else
+     (+ (veces (cdr lista) elem)
+        (if (equal? elem (car lista))
+            1 ;; Incrementa la cuenta en 1 encuentra el elemento
+            0))
+     )
+    )
+  )
+;; Ejemplos:
+;;(veces '(a (b c) b a (e b (g b h))) 'b)
+;; = 4
+;;;;
+
+;;;;
+;; Ejercicio 7
+;;;;
+
+;;
+;; Nombre: suprimir
+;; Objetivo: eliminar todas la apariciones de un elemento de la lista
+;; Parámetros:
+;;   lista: lista con posibles sublistas que se modificará
+;;   x: elemento que se eliminará de la lista
+;; Resultados:
+;;   Devuelve la lista después de haber eliminado las aparaciones de x
+;; Descripción:
+;;   Recorre la lista de forma recursiva y cuando encuentra el valor
+;;   a suprimir lo omite de los valores devueltos
+;;
+(define (suprimir lista x)
+  (cond
+    ((not (list? lista)) '())
+    ((null? lista) '())
+    ((list? (car lista))
+     (append
+      (list (suprimir (car lista) x))
+      (suprimir (cdr lista) x)
+      )
+     )
+    (else
+     (append
+      (if (equal? x (car lista))
+          ;; append con lista vacía no altera la otra lista
+          '()
+          ;; Añade de vuelta el elemento
+          (list (car lista))
+          )
+      ;; LLama la función de nuevo sobre el resto de la lista
+      (suprimir (cdr lista) x)
+      )
+     )
+    )
+  )
+;; Ejemplos:
+;;(suprimir '(a b d c (a b a) (d (e g) f) b) 'a)
+;; = (b d c (b) (d (e g) f) b)
+;;;;
+
+;;;;
+;; Ejercicio 8
+;;;;
+
+;;
+;; Nombre: emparejar
+;; Objetivo:
+;;   Crea una lista con parejas que compartan el mismo índice en las listas
+;;   recibidas como parámetro
+;; Parámetros:
+;;   lista1: lista cuyos elementos irán a la izquierada de las parejas
+;;   lista2: lista cuyos elementos irán a la derecha de las parejas
+;; Resultados:
+;;   Devuelve una lista con sublistas formadas por los elementos que
+;;   tienen el mismo índice en las dos listas recibidas
+;; Descripción:
+;;   Para funcionar de forma genérica, en caso de listas de distinta
+;;   longitud, el número de parejas se limita por la lista más corta.
+;;   Luego recorre ambas listas creando parejas y las añade a otra lista.
+;;
+(define (emparejar lista1 lista2)
+  (if (or (null? lista1) (null? lista2))
+      '()
+      (append (list (car lista1) (car lista2))
+              (emparejar (cdr lista1) (cdr lista2))
+              )
+      )
+  )
+(define (emparejar lista1 lista2)
+  (define (auxiliar lista1 lista2)
+    (if (or (null? lista1) (null? lista2))
+      '()
+      (append (list (car lista1) (car lista2))
+              (emparejar (cdr lista1) (cdr lista2))
+              )
+      )
+    )
+  (if (and (list? lista1) (list? lista2))
+      (auxiliar lista1 lista2)
+      '()
+      )
+  )
+;; Ejemplos:
+;;(emparejar '(a b c d e) '(1 2 3 4 5))
+;; = (a 1 b 2 c 3 d 4 e 5)
+;;;;
+
+;;;;
+;; Ejercicio 9
+;;;;
+
+;;
+;; Nombre: cambiar
+;; Objetivo: cambiar en la lista recibida un elemento por otro
+;; Parámetros:
+;;   lista: lista con posibles sublistas en la que cambiar los elementos
+;;   obj: elemento a cambiar en la lista
+;;   dest: elemento que sustituye al elemento cambiado
+;; Resultados:
+;;   Devuelve la lista recibida con las ocurrencias de obj cambiadas por dest
+;; Descripción:
+;;   Recorre de forma recursiva la lista y sublistas, devuelve como elemento
+;;   de la lista dest cuando encuentra obj
+;;
+(define (cambiar lista obj dest)
+  (cond
+    ((not (list? lista)) '())
+    ((null? lista) '())
+    ((list? (car lista))
+     (append
+      (list (cambiar (car lista) obj dest))
+      (cambiar (cdr lista) obj dest)
+      )
+     )
+    (else
+     (cons
+      (if (equal? obj (car lista))
+          ;; append con lista vacía no altera la otra lista
+          dest
+          ;; Añade de vuelta el elemento
+          (car lista)
+          )
+      ;; LLama la función de nuevo sobre el resto de la lista
+      (cambiar (cdr lista) obj dest)
+      )
+     )
+    )
+  )
+;; Ejemplos:
+;;(cambiar '(a (a b c) c b (d e b a)) 'a 1)
+;; = (1 (1 b c) c b (d e b 1))
+;;;;
+
+;;;;
+;; Ejercicio 10
+;;;;
+
+;;
+;; Nombre: cuadrados
+;; Objetivo: crea una lista con sublistas de cada elemento recibido y su cuadrado
+;; Parámetros:
+;;   lista: lista de la que se extraerán los elementos para operar
+;; Resultados:
+;;   Devuelve una lista compuesta de sublistas con un elemento de la lista
+;;   recibida y su correspondiente cuadrado
+;; Descripción:
+;;   Recorre toda la lista recibida y crea una sublista con el elemento actual
+;;   y su cuadrado, va insertando la listas creadas en la sublista a devolver
+;;
+(define (cuadrados lista)
+  (if (null? lista)
+      '()
+      (cons (list (car lista) (expt (car lista) 2))
+            (cuadrados (cdr lista))
+            )
+      )
+  ;;(map (lambda (elem) (list elem (expt elem 2))))
+  )
+;; Ejemplos:
+;;(cuadrados '(1 2 3))
+;; = ((1 1) (2 4) (3 9))
+;;;;
+
+;;;;
+;; Ejercicio 11
+;;;;
+
+;;
+;; Nombre: dato-resultado
+;; Objetivo:
+;;   Crea una lista con sublistas emparejando un elemento de la lista recibida
+;;   junto con el resultado de pasar ese elemento a la función recibida
+;; Parámetros:
+;;   lista: lista de la que se obtienen los elementos
+;;   func: función que se aplica para crear el segundo elemento de las parejas
+;; Resultados:
+;;   Devuelve una lista con sublistas cuyo primer elemento es obtenido de la lista
+;;   recibida y el segundo es el resultado de pasar ese elemento por la función
+;; Descripción:
+;;   Se recorre la lista de forma secuencial y para cada elemento se crea una sublista
+;;   con el elemento primero y segundo el resultado de aplicarle la función recibida
+;;
+(define (dato-resultado lista func)
+  (if (null? lista)
+      '()
+      (cons (list (car lista) (func (car lista)))
+            (dato-resultado (cdr lista) func)
+            )
+      )
+  ;;(map (lambda (elem) (list elem (func elem))))
+  )
+;; Ejemplos:
+;;(dato-resultado '(1 2 3) (lambda (x) (expt x 2)))
+;; = ((1 1) (2 4) (3 9))
+;;(dato-resultado '(1 2 3) even?)
+;; = ((1 #f) (2 #t) (3 #f))
+;;;;
+
+;;;;
+;; Ejercicio 12
+;;;;
+
+;;
+;; Nombre: diferencia
+;; Objetivo:
+;;   Obtener una lista con los elementos de la lista recibida que no están en
+;;   otra lista recibida
+;; Parámetros:
+;;   lista-obj: lista de la que extraer elementos
+;;   lista-dif: lista cuyos elementos se eliminan de la primera
+;; Resultados:
+;;   Devuelve una lista que sea la diferencia de la primera con la segunda
+;; Descripción:
+;;
+;;
+(define (diferencia lista-obj lista-dif)
+  
+  )
+
+
+;;;;;; PREGUNTAR:
+;; funciones compactas recursivas: cuadrados, dato-resultado
+;; posible usar map en ejercicios 10 y 11
+
