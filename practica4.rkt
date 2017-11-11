@@ -478,11 +478,200 @@
 ;;
 ;;
 (define (diferencia lista-obj lista-dif)
-  
+  (if (null? lista-obj)
+      '()
+      (append
+       (diferencia (cdr lista-obj) lista-dif)
+       (if (member (car lista-obj) lista-dif)
+           '()
+           (list (car lista-obj))
+           )
+       )
+      )
   )
+;; Ejemplos:
+;;(diferencia '(libro Sol casa Luna) '(Sol Marte Luna))
+;; = (libro casa)
+;;;;
 
+;;;;
+;; Ejercicio 13
+;;;;
 
-;;;;;; PREGUNTAR:
-;; funciones compactas recursivas: cuadrados, dato-resultado
-;; posible usar map en ejercicios 10 y 11
+;;
+;; Nombre: diferencia-simetrica
+;; Objetivo:
+;;   Genera una lista con los elementos no comunes entre la listas recibidas
+;;   como parámetro
+;; Parámetros:
+;;   lista1: una de las listas para realizar la diferencia
+;;   lista2: la otra lista con la que se realiza la diferencia
+;; Resultados:
+;;   Devuelve una lista compuesta por los elementos no comunes entre las dos listas
+;; Descripción:
+;;   Recorre ambas listas y incluyen en el resultado: los elementos de la lista1 que
+;;   no estén en la lista2 y los elementos de la lista2 que no estén en la lista1
+;;
+(define (diferencia-simetrica lista1 lista2)
+  (append
+   (diferencia lista1 lista2)
+   (diferencia lista2 lista1)
+   )
+  
+  (define (auxiliar resto1 resto2)
+    (define null1 (null? resto1))
+    (define null2 (null? resto2))
+    (if (and null1 null2)
+      '()
+      (append
+       (if (or null1 (member (car resto1) lista2))
+           '()
+           (list (car resto1))
+           )
+       (if (or null2 (member (car resto2) lista1))
+           '()
+           (list (car resto2))
+           )
+       (diferencia-simetrica
+        (if null1 '() (cdr resto1))
+        (if null2 '() (cdr resto2))
+        )
+       )
+      )
+    )
+  (auxiliar lista1 lista2)
+  )
+;; Ejemplos:
+;;(diferencia-simetrica '(libro Sol casa Luna) '(Sol Marte Luna))
+;; = (casa libro Marte)
+;;;;
 
+;;;;
+;; Ejercicio 14
+;;;;
+
+;;
+;; Nombre: media-aritmetica-lista
+;; Objetivo: realizar la media aritmética de los elementos de una lista
+;; Parámetros:
+;;   lista: lista a cuyos elementos se les hace la media aritmética
+;; Resultados:
+;;   Devuelve la media aritmética de los elementos de la lista recibida
+;; Descripción:
+;;   Recorre la lista sumando todos los elementos y divide el resultado entre
+;;   la longitud de la lista
+;;
+(define (media-aritmetica-lista lista)
+  (/
+   (foldl + 0 lista)
+   1.0 ;; para convertir a decimal el resultado
+   (length lista)   
+   )
+  )
+;; Ejemplos
+;;(media-aritmetica-lista '(1 2 3 4 5))
+;; = 3.0
+;;;;
+
+;;
+;; Nombre: media-aritmetica
+;; Objetivo: calcular la media aritmética de los números recibidos
+;; Parámetros:
+;;   ni: número recibido en la posición i
+;;   Nota: recibe un número arbitrario de parámetros
+;; Resultados:
+;;   Devuelve la media aritmética de los parámetros recibidos
+;; Descripción:
+;;   Al recibir los parámetros como una lista simplemente usa la función
+;;   que calcula la media aritmética de una lista
+;;
+(define media-aritmetica
+  (lambda lista
+    (media-aritmetica-lista lista)
+    )
+  )
+;; Ejemplos:
+;;(media-aritmetica 1 2 3 4 5)
+;; = 3.0
+;;;;
+
+;;
+;; Nombre: media-aritmetica-bis
+;; Objetivo: calcular la media aritmética de los números recibidos
+;; Parámetros:
+;;   ni: número recibido en la posición i
+;;   Nota: se pide un mínimo de dos números como parámetro
+;; Resultados:
+;;   Devuelve la media aritmética de los parámetros recibidos
+;; Descripción:
+;;   Al recibir los parámetros como una lista simplemente usa la función
+;;   que calcula la media aritmética de una lista
+;;
+(define media-aritmetica-bis
+  (lambda (n1 n2 . lista)
+    (media-aritmetica-lista (append (list n1 n2) lista))
+    )
+  )
+;; Ejemplos:
+;;(media-aritmetica-bis 1 2 3 4 5)
+;; = 3.0
+;;;;
+
+;;;;
+;; Ejercicio 15
+;;;;
+
+;;
+;; Nombre: area-poligono
+;; Objetivo: calcula el área del polígono cuyos vértices se reciben
+;; Parámetros:
+;;   xi: coordenada x del vértice i
+;;   yi: coordenada y del vértice i
+;;   Nota: se requiere un mínimo de tres vértices (coordenadas x e y)
+;; Resultados:
+;;   Devuelve el área delimitada por los vértices recibidos
+;; Descripción:
+;;   Usa la fórmula del área de Gauss para un polígono con cualquier número
+;;   de lados
+;;
+(define area-poligono
+  (lambda (x1 y1 x2 y2 x3 y3 . resto)
+    (define vertices
+      (append
+       (list x2 y2 x3 y3)
+       resto
+       (list x1 y1 'null 'null)
+       )
+      )
+    (do (
+         (xi x1 xi+1)
+         (yi y1 yi+1)
+         (xi+1 x2 (car lista))
+         (yi+1 y2 (cadr lista))
+         (lista vertices (cddr lista))
+         (sum 0.0 (+ sum (* xi yi+1) (- (* xi+1 yi))))
+         )
+      ((null? lista) (/ sum 2))
+      )
+
+;    (define (auxiliar vertices x y)
+;      (cond
+;        ((null? vertices) 0)
+;        (else
+;         (+
+;          (- (* x y) (* (car vertices) (cadr vertices)))
+;          (auxiliar (cddr vertices) (car vertices) (cadr vertices)))
+;          )
+;         )
+;        )
+;    
+;    (auxiliar (cddr vert) (car vert) (cadr vert))
+    )
+  )
+;; Ejemplos:
+(area-poligono 1 0 0 2 -1 0)
+(display "--------\n")
+(area-poligono 4 3 1 0 0 -1 3 0)
+
+;; = 
+;;;;
