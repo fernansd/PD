@@ -31,6 +31,7 @@
        ;; Añade al resultado el producto de las componentes de los vectores
        (resultado 0 (+ resultado (* (vector-ref v1 i) (vector-ref v2 i))))
        )
+    ;; Cuando se haya recorrido el vector más pequeño, se para
     ((> i tam) resultado)
     )
   )
@@ -672,8 +673,30 @@
 ;;   Devuelve el área delimitada por los vértices recibidos
 ;; Descripción:
 ;;   Usa la fórmula del área de Gauss para un polígono con cualquier número
-;;   de lados
+;;   de lados. La fórmula usada es:
+;;     Área = 1/2*sumatorio(determinante((xi,yi),(xi+1,yi+1)))
 ;;
+;(define area-poligono
+;  (lambda (x1 y1 x2 y2 x3 y3 . resto)
+;    (define vertices
+;      (append
+;       (list x2 y2 x3 y3)
+;       resto
+;       (list x1 y1 'null 'null)
+;       )
+;      )
+;    (do (
+;         (xi x1 xi+1)
+;         (yi y1 yi+1)
+;         (xi+1 x2 (car lista))
+;         (yi+1 y2 (cadr lista))
+;         (lista vertices (cddr lista))
+;         (sum 0.0 (+ sum (* xi yi+1) (- (* xi+1 yi))))
+;         )
+;      ((null? lista) (/ (abs sum) 2))
+;      )
+;    )
+;  )
 (define area-poligono
   (lambda (x1 y1 x2 y2 x3 y3 . resto)
     ;; Se añade al final el primer punto para simplificar los cálculos
