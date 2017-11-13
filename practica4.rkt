@@ -26,9 +26,12 @@
 (define (producto-escalar v1 v2)
   (do (;; Variable de posición
        (i 0 (+ i 1))
+       ;; Longitud del menor vector, determina número de iteraciones
        (tam (- (min (vector-length v1) (vector-length v2)) 1))
+       ;; Guarda el valor del producto escalar
        (resultado 0 (+ resultado (* (vector-ref v1 i) (vector-ref v2 i))))
        )
+    ;; Cuando se haya recorrido el vector más pequeño, se para
     ((> i tam) resultado)
     )
   )
@@ -89,24 +92,30 @@
 ;;
 ;;
 (define (aplicar vec mat)
-  (let* (
-         (fils-1 (vector-length mat))
-         (cols-1 (vector-length (vector-ref mat 0)))
-         )
-    (if (= fils-1 (- (vector-length vec) 1))
-        (do (
-             (ncol 0 (if (= fil fils-1) (+ col 1) col))
-             (col (vector-map (lambda (col) 3))
-                  (vector-map (lambda (col) (vector-ref col ncol)) mat))
-             (resultado '() (cons (producto-escalar vec col) resultado))
+  (define max-col (vector-length (vector-ref mat 0)))
+  (cond
+    ((= (vector-length vec) (vector-length mat))
+     (define (auxiliar mat ncol resultado)
+       (if (= ncol max-col)
+           resultado
+           (let ((col (vector-map (lambda (col) (vector-ref col ncol)) mat))
+                 )
+             (auxiliar mat (+ ncol 1)(append resultado (list (producto-escalar vec col))))
              )
-          ((> ncol cols-1) resultado)
-          )
-        ;; Devuelve #f si no son multiplicables
-        #f
-        )
-    )
+           )
+       )
+     (list->vector (auxiliar mat 0 '()))
+     )
+    (else #f)
+      )
+
   )
+;; Ejemplos:
+;;(aplicar #(1 1 1) #(#(1 2 1) #(3 4 2) #(5 6 3)))
+;; = #(9 12 6)
+;;(aplicar #(1 1) #(#(1 2) #(3 4) #(5 6)))
+;; = #f
+;;;;
 
 ;;;;
 ;; Ejercicio 4
@@ -632,8 +641,30 @@
 ;;   Devuelve el área delimitada por los vértices recibidos
 ;; Descripción:
 ;;   Usa la fórmula del área de Gauss para un polígono con cualquier número
-;;   de lados
+;;   de lados. La fórmula usada es:
+;;     Área = 1/2*sumatorio(determinante((xi,yi),(xi+1,yi+1)))
 ;;
+;(define area-poligono
+;  (lambda (x1 y1 x2 y2 x3 y3 . resto)
+;    (define vertices
+;      (append
+;       (list x2 y2 x3 y3)
+;       resto
+;       (list x1 y1 'null 'null)
+;       )
+;      )
+;    (do (
+;         (xi x1 xi+1)
+;         (yi y1 yi+1)
+;         (xi+1 x2 (car lista))
+;         (yi+1 y2 (cadr lista))
+;         (lista vertices (cddr lista))
+;         (sum 0.0 (+ sum (* xi yi+1) (- (* xi+1 yi))))
+;         )
+;      ((null? lista) (/ (abs sum) 2))
+;      )
+;    )
+;  )
 (define area-poligono
   (lambda (x1 y1 x2 y2 x3 y3 . resto)
     (define vertices
@@ -644,34 +675,24 @@
        )
       )
     (do (
-         (xi x1 xi+1)
-         (yi y1 yi+1)
-         (xi+1 x2 (car lista))
-         (yi+1 y2 (cadr lista))
+         (count (- (/ (length vertices) 2) 1))
+         (i 1 (+ i 1))
+         (xi x1 (car lista))
+         (yi y1 (cadr lista))
+         (xi+1 x2 (caddr lista))
+         (yi+1 y2 (cadddr lista))
          (lista vertices (cddr lista))
          (sum 0.0 (+ sum (* xi yi+1) (- (* xi+1 yi))))
          )
-      ((null? lista) (/ sum 2))
+      ((= i count) (display i)(newline)(/ (abs sum) 2))
+      (display xi)(display " - ")(display yi)(display " -- ")(display xi+1)(display " - ")(display yi+1)(newline)
       )
-
-;    (define (auxiliar vertices x y)
-;      (cond
-;        ((null? vertices) 0)
-;        (else
-;         (+
-;          (- (* x y) (* (car vertices) (cadr vertices)))
-;          (auxiliar (cddr vertices) (car vertices) (cadr vertices)))
-;          )
-;         )
-;        )
-;    
-;    (auxiliar (cddr vert) (car vert) (cadr vert))
     )
   )
 ;; Ejemplos:
 (area-poligono 1 0 0 2 -1 0)
-(display "--------\n")
+;; = 2.0
+(display "------------\n")
 (area-poligono 4 3 1 0 0 -1 3 0)
-
-;; = 
+;; = 4.0
 ;;;;
