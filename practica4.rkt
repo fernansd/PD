@@ -26,7 +26,9 @@
 (define (producto-escalar v1 v2)
   (do (;; Variable de posición
        (i 0 (+ i 1))
+       ;; El vector más pequeño limita el número de iteraciones
        (tam (- (min (vector-length v1) (vector-length v2)) 1))
+       ;; Añade al resultado el producto de las componentes de los vectores
        (resultado 0 (+ resultado (* (vector-ref v1 i) (vector-ref v2 i))))
        )
     ((> i tam) resultado)
@@ -56,15 +58,28 @@
 ;;    r_x = u_y*v_z - u_z*v_y
 ;;    r_y = u_z*v_x - u_x*v_z
 ;;    r_z = u_x*v_y - u_y*v_x
+;;   Se numerarán las componentes, siendo x índice 0 y así sucesivamente
 ;;
 (define (producto-vectorial u v)
-  (vector ;; Vector resultado
-    ;; r_x = u_y*v_z - u_z*v_y
-    (- (* (vector-ref u 1) (vector-ref v 2)) (* (vector-ref u 2) (vector-ref v 1)))
-    ;; r_y = u_z*v_x - u_x*v_z
-    (- (* (vector-ref u 2) (vector-ref v 0)) (* (vector-ref u 0)(vector-ref v 2)))
-    ;; r_z = u_x*v_y - u_y*v_x
-    (- (* (vector-ref u 0) (vector-ref v 1)) (* (vector-ref u 1) (vector-ref v 0)))
+  ;; Vector de resultados
+  (define vec (make-vector 3))
+  (do (
+       (len (vector-length vec))
+       ;; Se comienza con el índice en la componente y
+       (i 1 (if (= i 2) 0 (+ i 1)))
+       ;; Se comienza con el índice en la componente z
+       (j 2 (if (= j 2) 0 (+ j 1)))
+       ;; Contador de iteraciones
+       (iter 0 (+ iter 1))
+       )
+    ;; Para tras calcular todas las componentes
+    ((= iter len) vec)
+    ;; Calcula la posición iter con: u_i*v_j - u_i*v_j
+    (vector-set! vec iter (-
+                           (* (vector-ref u i) (vector-ref v j))
+                           (* (vector-ref u j) (vector-ref v i))
+                           )
+                 )
     )
   )
 ;; Ejemplos:
@@ -86,27 +101,34 @@
 ;;   Matriz transformada al realizar el producto vectorial de cada vector columna
 ;;   por el vector recibido
 ;; Descripción:
-;;
+;;   Ya que la matriz recibida tiene la forma de un vector de filas, lo primero en cada
+;;   iteración es obtener el vector columna. Luego se le aplica el vector recibido como
+;;   parámetro realizando el producto escalar
 ;;
 (define (aplicar vec mat)
-  (let* (
-         (fils-1 (vector-length mat))
-         (cols-1 (vector-length (vector-ref mat 0)))
-         )
-    (if (= fils-1 (- (vector-length vec) 1))
-        (do (
-             (ncol 0 (if (= fil fils-1) (+ col 1) col))
-             (col (vector-map (lambda (col) 3))
-                  (vector-map (lambda (col) (vector-ref col ncol)) mat))
-             (resultado '() (cons (producto-escalar vec col) resultado))
-             )
-          ((> ncol cols-1) resultado)
-          )
-        ;; Devuelve #f si no son multiplicables
-        #f
-        )
+  ;; Obtiene el número de columnas
+  (define ncol (vector-length (vector-ref mat 0)))
+  (define (auxiliar resultado pos)
+    (cond
+      ;; Comprueba si aún le quedan iteraciones
+      ((< pos ncol)
+       ;; Calcula el elemento de la columna de índice pos
+       (vector-set! resultado pos
+                    (producto-escalar vec
+                                      ;; Obtiene el vector columna de índice pos
+                                      (vector-map (lambda (fila) (vector-ref fila pos)) mat)))
+       (auxiliar resultado (+ pos 1))
+       )
+      ;; Devuelve el resultado si ya ha terminado de calcular
+      (else resultado)
+      )
     )
+  (auxiliar (make-vector ncol) 0)
   )
+;; Ejemplos:
+;;(aplicar #(1 1 1) #(#(1 2 4) #(3 4 8) #(5 6 12)))
+;; = #(9 12 24)
+;;;;
 
 ;;;;
 ;; Ejercicio 4
@@ -125,12 +147,16 @@
 ;;
 (define (media-vector vec)
   (define len (vector-length vec))
+  ;; Comprueba si el vector tiene al menos longitud 1
   (if (= 0 len)
       #f
       (do (
+           ;; Contador de iteraciones
            (i 0 (+ i 1))
+           ;; Sumatorio de los elementos del vector
            (suma 0.0 (+ suma (vector-ref vec i)))
            )
+        ;; La media es el sumatorio entre el número de elementos
         ((= i len) (/ suma len))
         )
       )
@@ -153,9 +179,12 @@
 (define (minimax mat)
   (do (
        (fils (vector-length mat))
+       ;; Variable contador de iteraciones
        (i 0 (+ i 1))
+       ;; Se crea una lista que contenga los mayores elementos de cada fila
        (max-valores '() (cons (apply max (vector->list (vector-ref mat i))) max-valores))
        )
+    ;; Se calcula el mínimo elemento entre los mayores
     ((= i fils) (apply min max-valores))
     )
   )
@@ -202,14 +231,20 @@
 ;; Funciones a las que llama: primo?
 ;;
 (define (filtrar-primos lista)
+  ;; Función auxiliar que recibe una lista donde guardar los primos
+  ;; y otra donde buscarlos
   (define (auxiliar primos lista)
+    ;; La condición de parada es que no hay elementos en la lista de búsqueda
     (if (null? lista)
-        primos
+        primos ;; Al acabar devuelve la lista de primos
+        ;; Si no ha terminado vuelve a llamar la función
         (auxiliar
+         ;; Comprueba si debe añadirlo o no a la lista de primos
          (if (primo? (car lista))
              (append primos (list (car lista)))
              primos
              )
+         ;; Quita la cabeza de la lista
          (cdr lista))
         )
     )
@@ -237,15 +272,22 @@
 ;;
 (define (veces lista elem)
   (cond
+    ;; Comprueba si no se ha recibido una lista
     ((not (list? lista)) 0)
+    ;; Comprueba si la lista no tiene elementos
     ((null? lista) 0)
+    ;; Comprueba si hay una sublista
     ((list? (car lista))
+     ;; Calcula la suma del resultado de llamar a la sublista y al resto de la lista
      (+ (veces (car lista) elem)
         (veces (cdr lista) elem)
         )
      )
+    ;; Si la cabeza de lista es un elemento normal
     (else
+     ;; LLama recursivamente al resto de la lista
      (+ (veces (cdr lista) elem)
+        ;; Comprueba si hay encontrado una ocurrencia o no
         (if (equal? elem (car lista))
             1 ;; Incrementa la cuenta en 1 encuentra el elemento
             0))
@@ -275,16 +317,22 @@
 ;;
 (define (suprimir lista x)
   (cond
+    ;; Comprueba si no se ha recibido una lista
     ((not (list? lista)) '())
+    ;; Comprueba si no queda elementos en la lista
     ((null? lista) '())
+    ;; Comprueba si ha sublista
     ((list? (car lista))
      (append
       (list (suprimir (car lista) x))
       (suprimir (cdr lista) x)
       )
      )
+    ;; Si es un elemento normal
     (else
+     ;; Devuelve el resultado de llamarla sobre el resto de la lista
      (append
+      ;; Comprueba si debe omitir el elemento de la lista
       (if (equal? x (car lista))
           ;; append con lista vacía no altera la otra lista
           '()
@@ -323,25 +371,14 @@
 ;;   Luego recorre ambas listas creando parejas y las añade a otra lista.
 ;;
 (define (emparejar lista1 lista2)
+  ;; Para si alguna de las dos listas ya no tiene elementos
   (if (or (null? lista1) (null? lista2))
-      '()
+      '() ;; No devuelve nada si ya no puede seguir
+      ;; Empareja las cabezas de lista
       (append (list (car lista1) (car lista2))
+              ;; Vuelve a llamar sobre el resto de las listas
               (emparejar (cdr lista1) (cdr lista2))
               )
-      )
-  )
-(define (emparejar lista1 lista2)
-  (define (auxiliar lista1 lista2)
-    (if (or (null? lista1) (null? lista2))
-      '()
-      (append (list (car lista1) (car lista2))
-              (emparejar (cdr lista1) (cdr lista2))
-              )
-      )
-    )
-  (if (and (list? lista1) (list? lista2))
-      (auxiliar lista1 lista2)
-      '()
       )
   )
 ;; Ejemplos:
@@ -368,18 +405,24 @@
 ;;
 (define (cambiar lista obj dest)
   (cond
+    ;; Comprueba si no se ha recibido una lista
     ((not (list? lista)) '())
+    ;; Comprueba si la lista está vacía
     ((null? lista) '())
+    ;; Comprueba si hay una sublista
     ((list? (car lista))
      (append
       (list (cambiar (car lista) obj dest))
       (cambiar (cdr lista) obj dest)
       )
      )
+    ;; Si es un elemento general
     (else
+     ;; Añade al resultado el valor cambiado
      (cons
+      ;; Comprueba si tiene que introducir el valor cambiado o dejarlo igual
       (if (equal? obj (car lista))
-          ;; append con lista vacía no altera la otra lista
+          ;; Sustituye por el valor
           dest
           ;; Añade de vuelta el elemento
           (car lista)
@@ -412,12 +455,16 @@
 ;;   y su cuadrado, va insertando la listas creadas en la sublista a devolver
 ;;
 (define (cuadrados lista)
+  ;; Se detiene cuando no quedan elementos en la lista
   (if (null? lista)
-      '()
+      '() ;; No devuelve nada si no puede seguir
+      ;; Calcula el cuadrado de la cabeza de lista
       (cons (list (car lista) (expt (car lista) 2))
+            ;; Se llama de nuevo sobre el resto de la lista
             (cuadrados (cdr lista))
             )
       )
+  ;;Opción corta:
   ;;(map (lambda (elem) (list elem (expt elem 2))))
   )
 ;; Ejemplos:
@@ -445,9 +492,12 @@
 ;;   con el elemento primero y segundo el resultado de aplicarle la función recibida
 ;;
 (define (dato-resultado lista func)
+  ;; Comprueba si no quedan elementos
   (if (null? lista)
-      '()
+      '() ;; No devuelve nada si no queda elementos en la lista
+      ;; Empareja el elemento con el resultado de aplicarle la función
       (cons (list (car lista) (func (car lista)))
+            ;; Se llama sobre el resto de la lista
             (dato-resultado (cdr lista) func)
             )
       )
@@ -475,13 +525,17 @@
 ;; Resultados:
 ;;   Devuelve una lista que sea la diferencia de la primera con la segunda
 ;; Descripción:
-;;
+;;   Recorre la lista de dónde se extraen los elementos y comprueba si cada
+;;   elemento se encuentra en la otra lista
 ;;
 (define (diferencia lista-obj lista-dif)
+  ;; Comprueba si no quedan elementos en la lista
   (if (null? lista-obj)
-      '()
+      '() ;; No devuelve nada si no quedan elementos
       (append
+       ;; Vuelve a llamar sobre el resto de la lista
        (diferencia (cdr lista-obj) lista-dif)
+       ;; Comprueba si el elemento es miembro de la lista
        (if (member (car lista-obj) lista-dif)
            '()
            (list (car lista-obj))
@@ -511,35 +565,14 @@
 ;; Descripción:
 ;;   Recorre ambas listas y incluyen en el resultado: los elementos de la lista1 que
 ;;   no estén en la lista2 y los elementos de la lista2 que no estén en la lista1
+;; Funciones a las que llama: diferencia
 ;;
 (define (diferencia-simetrica lista1 lista2)
+  ;; Llama a la función diferencia para cada lista con la otra
   (append
    (diferencia lista1 lista2)
    (diferencia lista2 lista1)
    )
-  
-  (define (auxiliar resto1 resto2)
-    (define null1 (null? resto1))
-    (define null2 (null? resto2))
-    (if (and null1 null2)
-      '()
-      (append
-       (if (or null1 (member (car resto1) lista2))
-           '()
-           (list (car resto1))
-           )
-       (if (or null2 (member (car resto2) lista1))
-           '()
-           (list (car resto2))
-           )
-       (diferencia-simetrica
-        (if null1 '() (cdr resto1))
-        (if null2 '() (cdr resto2))
-        )
-       )
-      )
-    )
-  (auxiliar lista1 lista2)
   )
 ;; Ejemplos:
 ;;(diferencia-simetrica '(libro Sol casa Luna) '(Sol Marte Luna))
@@ -562,10 +595,12 @@
 ;;   la longitud de la lista
 ;;
 (define (media-aritmetica-lista lista)
+  ;; media = sum(lista)/len(lista)
   (/
-   (foldl + 0 lista)
+   ;; Calcula el sumatorio de toda la lista
+   (apply + lista)
    1.0 ;; para convertir a decimal el resultado
-   (length lista)   
+   (length lista)
    )
   )
 ;; Ejemplos
@@ -584,9 +619,11 @@
 ;; Descripción:
 ;;   Al recibir los parámetros como una lista simplemente usa la función
 ;;   que calcula la media aritmética de una lista
+;; Funciones a las que llama: media-aritmetica-lista
 ;;
 (define media-aritmetica
   (lambda lista
+    ;; Llama la función de media de una lista sobre la lista de argumentos
     (media-aritmetica-lista lista)
     )
   )
@@ -606,9 +643,12 @@
 ;; Descripción:
 ;;   Al recibir los parámetros como una lista simplemente usa la función
 ;;   que calcula la media aritmética de una lista
+;; Funciones a las que llama: media-aritmetica-lista
 ;;
 (define media-aritmetica-bis
   (lambda (n1 n2 . lista)
+    ;; Añade los parámetros obligatorios a la lista y llama la función
+    ;; que calcula media sobre una lista
     (media-aritmetica-lista (append (list n1 n2) lista))
     )
   )
@@ -636,42 +676,32 @@
 ;;
 (define area-poligono
   (lambda (x1 y1 x2 y2 x3 y3 . resto)
+    ;; Se añade al final el primer punto para simplificar los cálculos
     (define vertices
-      (append
-       (list x2 y2 x3 y3)
-       resto
-       (list x1 y1 'null 'null)
-       )
+      (append (list x1 y1 x2 y2 x3 y3) resto (list x1 y1))
       )
-    (do (
-         (xi x1 xi+1)
-         (yi y1 yi+1)
-         (xi+1 x2 (car lista))
-         (yi+1 y2 (cadr lista))
-         (lista vertices (cddr lista))
-         (sum 0.0 (+ sum (* xi yi+1) (- (* xi+1 yi))))
-         )
-      ((null? lista) (/ sum 2))
+    ;; Se resta 1 ya que se repite el primer punto
+    (define nvertices (- (/ (length vertices) 2) 1))
+    ;; Función auxiliar que calcula el sumatorio de los determinantes
+    (define (auxiliar vertices it)
+      (if (< it nvertices)
+          ;; Sumatorio de determinantes
+          (+
+           ;; Cálculo del determinante
+           (- (* (car vertices) (cadddr vertices)) (* (caddr vertices) (cadr vertices)))
+           ;; Realiza la siguiente iteración
+           (auxiliar (cddr vertices) (+ it 1))
+           )
+          0 ;; Cuando llega al final devuelve 0
+          )
       )
-
-;    (define (auxiliar vertices x y)
-;      (cond
-;        ((null? vertices) 0)
-;        (else
-;         (+
-;          (- (* x y) (* (car vertices) (cadr vertices)))
-;          (auxiliar (cddr vertices) (car vertices) (cadr vertices)))
-;          )
-;         )
-;        )
-;    
-;    (auxiliar (cddr vert) (car vert) (cadr vert))
+    ;; Calcula el área
+    (/ (abs (auxiliar vertices 0)) 2)
     )
   )
 ;; Ejemplos:
-(area-poligono 1 0 0 2 -1 0)
-(display "--------\n")
-(area-poligono 4 3 1 0 0 -1 3 0)
-
-;; = 
+;;(area-poligono 1 0 0 2 -1 0)
+;; = 2.0
+;;(area-poligono 4 3 1 0 0 -1 3 0)
+;; = 4.0
 ;;;;
