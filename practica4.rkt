@@ -465,7 +465,6 @@
             (cuadrados (cdr lista))
             )
       )
-  ;;Opción corta:
   ;;(map (lambda (elem) (list elem (expt elem 2))))
   )
 ;; Ejemplos:
@@ -569,7 +568,7 @@
 ;; Funciones a las que llama: diferencia
 ;;
 (define (diferencia-simetrica lista1 lista2)
-  ;; Llama a la función diferencia para cada lista con la otra
+  ;; Llama a la función diferencia de cada lista con la otra
   (append
    (diferencia lista1 lista2)
    (diferencia lista2 lista1)
@@ -676,27 +675,6 @@
 ;;   de lados. La fórmula usada es:
 ;;     Área = 1/2*sumatorio(determinante((xi,yi),(xi+1,yi+1)))
 ;;
-;(define area-poligono
-;  (lambda (x1 y1 x2 y2 x3 y3 . resto)
-;    (define vertices
-;      (append
-;       (list x2 y2 x3 y3)
-;       resto
-;       (list x1 y1 'null 'null)
-;       )
-;      )
-;    (do (
-;         (xi x1 xi+1)
-;         (yi y1 yi+1)
-;         (xi+1 x2 (car lista))
-;         (yi+1 y2 (cadr lista))
-;         (lista vertices (cddr lista))
-;         (sum 0.0 (+ sum (* xi yi+1) (- (* xi+1 yi))))
-;         )
-;      ((null? lista) (/ (abs sum) 2))
-;      )
-;    )
-;  )
 (define area-poligono
   (lambda (x1 y1 x2 y2 x3 y3 . resto)
     ;; Se añade al final el primer punto para simplificar los cálculos
@@ -715,7 +693,7 @@
            ;; Realiza la siguiente iteración
            (auxiliar (cddr vertices) (+ it 1))
            )
-          0 ;; Cuando llega al final devuelve 0
+          0.0 ;; Cuando llega al final devuelve 0
           )
       )
     ;; Calcula el área
